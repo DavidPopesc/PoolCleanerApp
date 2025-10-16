@@ -76,58 +76,59 @@ export default function HomePage() {
 
   const selectedGallons = pools[selectedPoolIdx ?? 0]?.gallons;
   // chemCalc(label, current[label as keyof typeof current], ideal[label as keyof typeof ideal])
-  const chemCalc = (key: string, label: string, currentLevel: number, idealLevel: number, poolGallons: number) => {
-    // const currentLevel = current[label as keyof typeof current];
-    // const idealLevel = ideal[label as keyof typeof ideal];
+  const chemCalc = (key: string, label: string, currentLevel: number, idealLevel: number, poolGallons: number, mode: 'text' | 'jsx' = 'jsx') => {
     const diff = idealLevel - currentLevel;
-    console.log(poolGallons);
-    if (key == "chlorine") {
-      return (
-          <p key={key} >{label}: {diff > 0 ? `Add some shock` : `Don't add chlorine until you reach your ideal level`}</p>
-      );
-    }
-    if (key == "pH") {
-      return (
-        <p key={key} >{label}: {
-          diff < 0 ? `Add ${((.328125 / 1 ) * (-diff) * (poolGallons / 10000)).toFixed(2)} gallons of acid or ${((((.328125 / 1 ) * (-diff) * (poolGallons / 10000)) * (128 / 1) * ( 6.33 / 24))).toFixed(0)} seconds of pour` : 
-          diff > 0 ? `Add ${((30 / 10000) * (diff) * (poolGallons) * (6.33 / 24)).toFixed(0)} seconds of pouring pH Up` : 'same current and ideal levels'
-          }</p>
-      );
-    }
-    if (key == "alkalinity") {
-      return (
-        <p key={key} >{label}: {
-          diff < 0 ? `Pour some acid, check your pH and adjust as needed` : 
-          diff > 0 ? `Add ${((1.5 / 10) * (poolGallons / 10000) * (diff / 1) * (16 / 25)).toFixed(2)} scoops of bicarb (using blue scooper)` : 'same current and ideal levels'
-          }</p>
-      );
-    }
 
-    if (key == "calcium") {
-      return (
-        <p key={key} >{label}: {
-          diff > 0 ? `Add ${((1 / 50) * (1.1 / 10) * (diff) * (poolGallons / 10000)).toFixed(2)} bags of Calcium` : 
-          diff < 0 ? `Drain some of the pool water if you badly need to lower. (brush first!)` : 'same current and ideal levels'
-          }</p>
+    const textOutput = (message: string) => `${label}: ${message}`;
+    const jsxOutput = (message: string) => <p key={key}>{label}: {message}</p>;
+    const output = mode === 'text' ? textOutput : jsxOutput;
+
+    if (key === 'chlorine') {
+      return output(diff > 0 ? `Add some shock` : `Don't add chlorine until you reach your ideal level`);
+    }
+    if (key === 'pH') {
+      return output(
+        diff < 0
+          ? `Add ${((0.328125 / 1) * -diff * (poolGallons / 10000)).toFixed(2)} gallons of acid or ${(
+              ((0.328125 / 1) * -diff * (poolGallons / 10000) * (128 / 1) * (6.33 / 24))
+            ).toFixed(0)} seconds of pour`
+          : diff > 0
+          ? `Add ${((30 / 10000) * diff * poolGallons * (6.33 / 24)).toFixed(0)} seconds of pouring pH Up`
+          : 'same current and ideal levels'
       );
     }
-
-    if (key == "CYA") {
-      return (
-        <p key={key} >{label}: {
-          diff > 0 ? `Add ${((1 / 30) * (1 / 4000) * (poolGallons / 1) * (16 / 25) * (diff)).toFixed(2)} scoops of stabilizer granule` : 'stop using Chlorine tabs and wait for CYA to naturally drop, or drain some water if you badly need to lower level'
-          }</p>
+    if (key === 'alkalinity') {
+      return output(
+        diff < 0
+          ? `Pour some acid, check your pH and adjust as needed`
+          : diff > 0
+          ? `Add ${((1.5 / 10) * (poolGallons / 10000) * (diff / 1) * (16 / 25)).toFixed(2)} scoops of bicarb (using blue scooper)`
+          : 'same current and ideal levels'
       );
     }
-
-    if (key == "salt") {
-      return (
-        <p key={key} >{label}: {
-          diff > 0 ? `Add ${((13 / 8000) * (poolGallons / 200) * (diff / 1) * (1 / 40)).toFixed(2)} bags of salt` : 'drain pool or wait for dilution from rain'
-          }</p>
+    if (key === 'calcium') {
+      return output(
+        diff > 0
+          ? `Add ${((1 / 50) * (1.1 / 10) * diff * (poolGallons / 10000)).toFixed(2)} bags of Calcium`
+          : diff < 0
+          ? `Drain some of the pool water if you badly need to lower. (brush first!)`
+          : 'same current and ideal levels'
       );
     }
-
+    if (key === 'CYA') {
+      return output(
+        diff > 0
+          ? `Add ${((1 / 30) * (1 / 4000) * poolGallons * (16 / 25) * diff).toFixed(2)} scoops of stabilizer granule`
+          : 'stop using Chlorine tabs and wait for CYA to naturally drop, or drain some water if you badly need to lower level'
+      );
+    }
+    if (key === 'salt') {
+      return output(
+        diff > 0
+          ? `Add ${((13 / 8000) * (poolGallons / 200) * (diff / 1) * (1 / 40)).toFixed(2)} bags of salt`
+          : 'drain pool or wait for dilution from rain'
+      );
+    }
   };
 
   function handleIdealChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
@@ -604,7 +605,7 @@ export default function HomePage() {
               );
               // if (label == "Chlorine (Cl)") {
               //   return (
-              //     <li key={key} className="text-gray-500">{label}: {diff > 0 ? `Add some shock` : `Don't add chlorine until you reach your ideal level`}</li>
+              //     <li key={key} className="text-gray-500">{label}: {diff > 0 ? `Add some
               //   );
               // }
 
@@ -619,6 +620,57 @@ export default function HomePage() {
           </ul>
         </div>
       </div>
+      {/* Share Button */}
+      {selectedPoolIdx !== null && pools[selectedPoolIdx] && (
+        <button
+          className="bg-green-500 text-white px-4 py-2 rounded mt-4"
+          onClick={() => {
+            const pool = pools[selectedPoolIdx];
+
+            
+            const chemicalLevels = Object.entries(current)
+              .filter(([key]) => currentTouched[key as keyof typeof currentTouched]) // Include only touched fields
+              .map(([key, value]) => `${key}: ${value}`)
+              .join('\n');
+
+            const suggestedChemicals = chemicalFields
+              .filter(field => currentTouched[field.key as keyof typeof currentTouched]) // Include only touched fields
+              .map(field => chemCalc(
+                field.key,
+                field.label,
+                current[field.key as keyof typeof current],
+                ideal[field.key as keyof typeof ideal],
+                pool.gallons,
+                'text' // Explicitly use text mode for plain text output
+              ))
+              .filter(Boolean)
+              .join('\n');
+
+            const currentDate = new Date().toLocaleDateString(); // Get the current date
+
+            const shareText = 
+              `Pool name: ${pool.name}\n` +
+              `Pool gallons: ${pool.gallons}\n` +
+              `Date: ${currentDate}\n` + // Add the current date
+              `Time: ${new Date().toLocaleTimeString()}\n` + // Add the current time
+              `Current pool chemical levels:\n${chemicalLevels}\n` +
+              `Suggested chemicals to add:\n${suggestedChemicals}`;
+
+            if (navigator.share) {
+              navigator.share({
+                title: `Pool Data: ${pool.name}`,
+                text: shareText,
+              })
+                .then(() => console.log('Shared successfully'))
+                .catch(err => console.error('Error sharing:', err));
+            } else {
+              alert('Sharing is not supported on this device.');
+            }
+          }}
+        >
+          Share Pool Data
+        </button>
+      )}
       <style jsx global>{`
         input[type='range'].slider-thumb-lg::-webkit-slider-thumb {
             width: 40px;

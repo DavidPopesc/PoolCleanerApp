@@ -419,7 +419,7 @@ export default function HomePage() {
         <div className="flex justify-center gap-8 mt-4">
           <button
             aria-label="Share Pool Data"
-            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow flex items-center justify-center"
+            className="bg-orange-400 hover:bg-orange-500 text-white rounded-full p-2 shadow flex items-center justify-center"
             onClick={() => {
               if (selectedPoolIdx === null) {
                 alert('No pool selected to share.');

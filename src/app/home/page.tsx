@@ -418,6 +418,62 @@ export default function HomePage() {
         {/* Centered icon actions below dropdown */}
         <div className="flex justify-center gap-8 mt-4">
           <button
+            aria-label="Share Pool Data"
+            className="bg-blue-500 hover:bg-blue-600 text-white rounded-full p-2 shadow flex items-center justify-center"
+            onClick={() => {
+              if (selectedPoolIdx === null) {
+                alert('No pool selected to share.');
+                return;
+              }
+              const pool = pools[selectedPoolIdx];
+
+              const chemicalLevels = Object.entries(current)
+                .filter(([key]) => currentTouched[key as keyof typeof currentTouched])
+                .map(([key, value]) => `${key}: ${value}`)
+                .join('\n');
+
+              const suggestedChemicals = chemicalFields
+                .filter(field => currentTouched[field.key as keyof typeof currentTouched])
+                .map(field => chemCalc(
+                  field.key,
+                  field.label,
+                  current[field.key as keyof typeof current],
+                  ideal[field.key as keyof typeof ideal],
+                  pool.gallons,
+                  'text'
+                ))
+                .filter(Boolean)
+                .join('\n');
+
+              const currentDate = new Date().toLocaleDateString();
+
+              const shareText =
+                `Pool name: ${pool.name}\n` +
+                `Pool gallons: ${pool.gallons}\n` +
+                `Date: ${currentDate}\n` +
+                `Time: ${new Date().toLocaleTimeString()}\n` +
+                `Current pool chemical levels:\n${chemicalLevels}\n` +
+                `Suggested chemicals to add:\n${suggestedChemicals}`;
+
+              if (navigator.share) {
+                navigator.share({
+                  title: `Pool Data: ${pool.name}`,
+                  text: shareText,
+                })
+                  .then(() => console.log('Shared successfully'))
+                  .catch(err => console.error('Error sharing:', err));
+              } else {
+                alert('Sharing is not supported on this device.');
+              }
+            }}
+            style={{ width: 44, height: 44 }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M4 12v4c0 1.1.9 2 2 2h12c1.1 0 2-.9 2-2v-4m-4-4l-4-4m0 0L8 8m4-4v12" />
+            </svg>
+          </button>
+
+          <button
             aria-label="Add Pool"
             className="bg-green-500 hover:bg-green-600 text-white rounded-full p-2 shadow flex items-center justify-center"
             onClick={() => setShowAddPool(true)}
@@ -620,57 +676,6 @@ export default function HomePage() {
           </ul>
         </div>
       </div>
-      {/* Share Button */}
-      {selectedPoolIdx !== null && pools[selectedPoolIdx] && (
-        <button
-          className="bg-green-500 text-white px-4 py-2 rounded mt-4"
-          onClick={() => {
-            const pool = pools[selectedPoolIdx];
-
-            
-            const chemicalLevels = Object.entries(current)
-              .filter(([key]) => currentTouched[key as keyof typeof currentTouched]) // Include only touched fields
-              .map(([key, value]) => `${key}: ${value}`)
-              .join('\n');
-
-            const suggestedChemicals = chemicalFields
-              .filter(field => currentTouched[field.key as keyof typeof currentTouched]) // Include only touched fields
-              .map(field => chemCalc(
-                field.key,
-                field.label,
-                current[field.key as keyof typeof current],
-                ideal[field.key as keyof typeof ideal],
-                pool.gallons,
-                'text' // Explicitly use text mode for plain text output
-              ))
-              .filter(Boolean)
-              .join('\n');
-
-            const currentDate = new Date().toLocaleDateString(); // Get the current date
-
-            const shareText = 
-              `Pool name: ${pool.name}\n` +
-              `Pool gallons: ${pool.gallons}\n` +
-              `Date: ${currentDate}\n` + // Add the current date
-              `Time: ${new Date().toLocaleTimeString()}\n` + // Add the current time
-              `Current pool chemical levels:\n${chemicalLevels}\n` +
-              `Suggested chemicals to add:\n${suggestedChemicals}`;
-
-            if (navigator.share) {
-              navigator.share({
-                title: `Pool Data: ${pool.name}`,
-                text: shareText,
-              })
-                .then(() => console.log('Shared successfully'))
-                .catch(err => console.error('Error sharing:', err));
-            } else {
-              alert('Sharing is not supported on this device.');
-            }
-          }}
-        >
-          Share Pool Data
-        </button>
-      )}
       <style jsx global>{`
         input[type='range'].slider-thumb-lg::-webkit-slider-thumb {
             width: 40px;

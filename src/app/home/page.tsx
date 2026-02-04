@@ -22,7 +22,7 @@ const chemicalFields = [
 ];
 
 const defaultIdeal = {
-  chlorine: 3,
+  chlorine: 2,
   pH: 7.4,
   alkalinity: 80,
   calcium: 250,
@@ -84,7 +84,7 @@ export default function HomePage() {
     const output = mode === 'text' ? textOutput : jsxOutput;
 
     if (key === 'chlorine') {
-      return output(diff > 0 ? `Add some shock` : `Don't add chlorine until you reach your ideal level`);
+      return output(diff > 0 ? `Add ${(poolGallons*diff/(10000*12.6)).toFixed(2)} scoops of shock, or ${(poolGallons*diff/(11*10000)).toFixed(2)} gallons of bleach` : `Don't add chlorine`);
     }
     if (key === 'pH') {
       return output(

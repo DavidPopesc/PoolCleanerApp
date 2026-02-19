@@ -39,6 +39,26 @@ const defaultCurrent = {
   salt: 0,
 };
 
+const defaultChemicalsUsed = {
+  tabs: 0,
+  algaecide: 0,
+  floc: 0,
+  clarifier: 0,
+  yellowOut: 0,
+  dePowder: 0,
+  phosphateRemover: 0,
+};
+
+const chemicalsUsedFields = [
+  { key: 'tabs', label: 'Tabs' },
+  { key: 'algaecide', label: 'Algaecide (bottles)' },
+  { key: 'floc', label: 'Floc (bottles)' },
+  { key: 'clarifier', label: 'Clarifier (bottles)' },
+  { key: 'yellowOut', label: 'Yellow Out (2lb cases)' },
+  { key: 'dePowder', label: 'DE Powder (bags)' },
+  { key: 'phosphateRemover', label: 'Phosphate Remover (bottles)' },
+];
+
 
 export default function HomePage() {
   const [ideal, setIdeal] = useState(defaultIdeal);
@@ -53,6 +73,7 @@ export default function HomePage() {
   });
   const [pools, setPools] = useState<any[]>([]);
   const [selectedPoolIdx, setSelectedPoolIdx] = useState<number | null>(null);
+  const [chemicalsUsedEntries, setChemicalsUsedEntries] = useState<Array<any>>([]);
   const [showAddPool, setShowAddPool] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
@@ -62,9 +83,8 @@ export default function HomePage() {
     async function fetchPools() {
       const res = await fetch('/api/pooldata');
       const data = await res.json();
-      setPools(data.poolData || []);
-      const poolList = data.poolData || [];
-      setPools(poolList);
+        const poolList = data.poolData || [];
+        setPools(poolList);
       if (poolList.length === 0) {
         setShowAddPool(true);
       }
@@ -135,6 +155,11 @@ export default function HomePage() {
     const { name, value } = e.target;
     setIdeal({ ...ideal, [name]: Number(value) });
   }
+
+  useEffect(() => {
+    // reset to a single empty entry whenever the selected pool changes
+    setChemicalsUsedEntries([{ key: chemicalsUsedFields[0].key, label: chemicalsUsedFields[0].label, amount: '' }]);
+  }, [selectedPoolIdx]);
 
   function handleCurrentChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     const { name, value } = e.target;
@@ -394,6 +419,27 @@ export default function HomePage() {
     setEditIdx(null);
   }
 
+
+  function addChemicalEntryAt(idx: number) {
+    const entry = chemicalsUsedEntries[idx];
+    if (!entry) return;
+    const amount = Number(entry.amount) || 0;
+    if (amount <= 0) return;
+    const filled = { ...entry, amount };
+    const copy = [...chemicalsUsedEntries];
+    copy[idx] = filled;
+    // append a new empty entry
+    copy.push({ key: chemicalsUsedFields[0].key, label: chemicalsUsedFields[0].label, amount: '' });
+    setChemicalsUsedEntries(copy);
+  }
+
+  function removeChemicalEntry(idx: number) {
+    const copy = chemicalsUsedEntries.filter((_, i) => i !== idx);
+    // ensure at least one empty entry remains
+    if (copy.length === 0) copy.push({ key: chemicalsUsedFields[0].key, label: chemicalsUsedFields[0].label, amount: '' });
+    setChemicalsUsedEntries(copy);
+  }
+
   return (
     <main className="flex flex-col items-center justify-center min-h-screen">
       <h1 className="text-3xl font-bold mb-6 text-gray-800">Pool Chemical Calculator</h1>
@@ -446,6 +492,9 @@ export default function HomePage() {
                 .join('\n');
 
               const currentDate = new Date().toLocaleDateString();
+              const chemicalsUsedText = chemicalsUsedEntries && chemicalsUsedEntries.length > 0
+                ? chemicalsUsedEntries.map(e => `${e.label}: ${e.amount}`).join('\n')
+                : 'None';
 
               const shareText =
                 `Pool name: ${pool.name}\n` +
@@ -453,7 +502,8 @@ export default function HomePage() {
                 `Date: ${currentDate}\n` +
                 `Time: ${new Date().toLocaleTimeString()}\n` +
                 `Current pool chemical levels:\n${chemicalLevels}\n` +
-                `Suggested chemicals to add:\n${suggestedChemicals}`;
+                `Suggested chemicals to add:\n${suggestedChemicals}\n` +
+                `Chemicals used:\n${chemicalsUsedText}`;
 
               if (navigator.share) {
                 navigator.share({
@@ -544,7 +594,7 @@ export default function HomePage() {
           </div>
         )}
       </div>
-      <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="w-full max-w-4xl grid grid-cols-1 md:grid-cols-4 gap-8">
   <form className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto">
           <h2 className="text-lg font-semibold mb-2">Current Pool Chemical Levels</h2>
           {chemicalFields.map(({ key, label, min, max, step }) => (
@@ -648,6 +698,60 @@ export default function HomePage() {
             </div>
           ))}
         </form>
+
+  <div className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold mb-2">Fill out Other Chemicals You Used</h2>
+
+          </div>
+
+          <div className="space-y-2">
+            {chemicalsUsedEntries.map((entry, idx) => {
+              const isLast = idx === chemicalsUsedEntries.length - 1;
+              return (
+                <div key={`${entry.key}-${idx}`} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 w-full">
+                    <select
+                      className="border p-1 rounded w-2/3"
+                      value={entry.key}
+                      onChange={e => {
+                        const key = e.target.value;
+                        const label = chemicalsUsedFields.find(f => f.key === key)?.label || key;
+                        const copy = [...chemicalsUsedEntries];
+                        copy[idx] = { ...copy[idx], key, label };
+                        setChemicalsUsedEntries(copy);
+                      }}
+                    >
+                      {chemicalsUsedFields.map(f => (
+                        <option key={f.key} value={f.key}>{f.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min={0}
+                      className="border p-1 w-24 text-right"
+                      placeholder="Amount"
+                      value={entry.amount}
+                      onChange={e => {
+                        const val = e.target.value === '' ? '' : Number(e.target.value);
+                        const copy = [...chemicalsUsedEntries];
+                        copy[idx] = { ...copy[idx], amount: val };
+                        setChemicalsUsedEntries(copy);
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 ml-2">
+                    {isLast ? (
+                      <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => addChemicalEntryAt(idx)}>Add</button>
+                    ) : (
+                      <button className="bg-gray-200 text-gray-800 px-2 py-1 rounded" onClick={() => removeChemicalEntry(idx)}>Remove</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
   <div className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto">
           <h2 className="text-lg font-semibold mb-2">Suggested Chemicals to Add</h2>

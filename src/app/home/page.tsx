@@ -699,61 +699,9 @@ export default function HomePage() {
           ))}
         </form>
 
-  <div className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto">
-          <div className="flex items-center justify-between">
-            <h2 className="text-lg font-semibold mb-2">Fill out Other Chemicals You Used</h2>
 
-          </div>
 
-          <div className="space-y-2">
-            {chemicalsUsedEntries.map((entry, idx) => {
-              const isLast = idx === chemicalsUsedEntries.length - 1;
-              return (
-                <div key={`${entry.key}-${idx}`} className="flex items-center justify-between">
-                  <div className="flex items-center gap-3 w-full">
-                    <select
-                      className="border p-1 rounded w-2/3"
-                      value={entry.key}
-                      onChange={e => {
-                        const key = e.target.value;
-                        const label = chemicalsUsedFields.find(f => f.key === key)?.label || key;
-                        const copy = [...chemicalsUsedEntries];
-                        copy[idx] = { ...copy[idx], key, label };
-                        setChemicalsUsedEntries(copy);
-                      }}
-                    >
-                      {chemicalsUsedFields.map(f => (
-                        <option key={f.key} value={f.key}>{f.label}</option>
-                      ))}
-                    </select>
-                    <input
-                      type="number"
-                      min={0}
-                      className="border p-1 w-24 text-right"
-                      placeholder="Amount"
-                      value={entry.amount}
-                      onChange={e => {
-                        const val = e.target.value === '' ? '' : Number(e.target.value);
-                        const copy = [...chemicalsUsedEntries];
-                        copy[idx] = { ...copy[idx], amount: val };
-                        setChemicalsUsedEntries(copy);
-                      }}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2 ml-2">
-                    {isLast ? (
-                      <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => addChemicalEntryAt(idx)}>Add</button>
-                    ) : (
-                      <button className="bg-gray-200 text-gray-800 px-2 py-1 rounded" onClick={() => removeChemicalEntry(idx)}>Remove</button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-        </div>
-
-  <div className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto">
+  <div className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto mb-6">
           <h2 className="text-lg font-semibold mb-2">Suggested Chemicals to Add</h2>
           <ul>
             {chemicalFields.map(({ key, label }) => {
@@ -834,6 +782,61 @@ export default function HomePage() {
           border-radius: 4px;
         }
       `}</style>
+
+
+        <div className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold mb-2">Fill out Other Chemicals You Used</h2>
+
+          </div>
+
+          <div className="space-y-2">
+            {chemicalsUsedEntries.map((entry, idx) => {
+              const isLast = idx === chemicalsUsedEntries.length - 1;
+              return (
+                <div key={`${entry.key}-${idx}`} className="flex items-center justify-between">
+                  <div className="flex items-center gap-3 w-full">
+                    <select
+                      className="border p-1 rounded w-2/3"
+                      value={entry.key}
+                      onChange={e => {
+                        const key = e.target.value;
+                        const label = chemicalsUsedFields.find(f => f.key === key)?.label || key;
+                        const copy = [...chemicalsUsedEntries];
+                        copy[idx] = { ...copy[idx], key, label };
+                        setChemicalsUsedEntries(copy);
+                      }}
+                    >
+                      {chemicalsUsedFields.map(f => (
+                        <option key={f.key} value={f.key}>{f.label}</option>
+                      ))}
+                    </select>
+                    <input
+                      type="number"
+                      min={0}
+                      className="border p-1 w-24 text-right"
+                      placeholder="Amount"
+                      value={entry.amount}
+                      onChange={e => {
+                        const val = e.target.value === '' ? '' : Number(e.target.value);
+                        const copy = [...chemicalsUsedEntries];
+                        copy[idx] = { ...copy[idx], amount: val };
+                        setChemicalsUsedEntries(copy);
+                      }}
+                    />
+                  </div>
+                  <div className="flex items-center gap-2 ml-2">
+                    {isLast ? (
+                      <button className="bg-blue-500 text-white px-3 py-1 rounded" onClick={() => addChemicalEntryAt(idx)}>Add</button>
+                    ) : (
+                      <button className="bg-gray-200 text-gray-800 px-2 py-1 rounded" onClick={() => removeChemicalEntry(idx)}>Remove</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
     </main>
   );
 }

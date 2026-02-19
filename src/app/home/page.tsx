@@ -84,7 +84,7 @@ export default function HomePage() {
     const output = mode === 'text' ? textOutput : jsxOutput;
 
     if (key === 'chlorine') {
-      return output(diff > 0 ? `Add ${(poolGallons*diff/(10000*12.6)).toFixed(2)} scoops of shock, or ${(poolGallons*diff/(11*10000)).toFixed(2)} gallons of bleach` : `Don't add chlorine`);
+      return output(diff > 0 ? `Add ${((poolGallons*diff/(10000*12.6))) > 1 ? (poolGallons*diff/(10000*12.6)).toFixed(2) : `${(poolGallons*diff/(10000*12.6)*25).toFixed(0)}oz or ${(poolGallons*diff/(10000*12.6)).toFixed(2)}` } scoops of shock, or ${(poolGallons*diff/(11*10000)).toFixed(2)} gallons of bleach` : `Don't add chlorine`);
     }
     if (key === 'pH') {
       return output(
@@ -102,7 +102,7 @@ export default function HomePage() {
         diff < 0
           ? `Pour some acid, check your pH and adjust as needed`
           : diff > 0
-          ? `Add ${((1.5 / 10) * (poolGallons / 10000) * (diff / 1) * (16 / 25)).toFixed(2)} scoops of bicarb (using blue scooper)`
+          ? `Add ${((1.5 / 10) * (poolGallons / 10000) * (diff / 1) * (16 / 28)).toFixed(2)} scoops of bicarb`
           : 'same current and ideal levels'
       );
     }
@@ -118,7 +118,7 @@ export default function HomePage() {
     if (key === 'CYA') {
       return output(
         diff > 0
-          ? `Add ${((1 / 30) * (1 / 4000) * poolGallons * (16 / 25) * diff).toFixed(2)} scoops of stabilizer granule`
+          ? `Add ${((1 / 30) * (1 / 4000) * poolGallons * (16 / 18) * diff).toFixed(2)} scoops of stabilizer granule`
           : 'stop using Chlorine tabs and wait for CYA to naturally drop, or drain some water if you badly need to lower level'
       );
     }

@@ -22,7 +22,7 @@ const chemicalFields = [
 ];
 
 const defaultIdeal = {
-  chlorine: 3,
+  chlorine: 7.5,
   pH: 7.4,
   alkalinity: 80,
   calcium: 250,

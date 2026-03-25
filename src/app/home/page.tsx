@@ -27,7 +27,7 @@ const defaultIdeal = {
   alkalinity: 80,
   calcium: 250,
   CYA: 30,
-  salt: 3000,
+  salt: 3500,
 };
 
 const defaultCurrent = {

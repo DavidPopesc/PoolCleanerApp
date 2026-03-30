@@ -1,17 +1,8 @@
 'use client';
 import { useState, useEffect } from 'react';
-// Helper to calculate gallons
-function calculateGallons(pool: any) {
-  const length = Number(pool.length) || 0;
-  const width = Number(pool.width) || 0;
-  const shallow = Number(pool.shallow) || 0;
-  const deep = Number(pool.deep) || 0;
-  // Simple average depth formula
-  const avgDepth = (shallow + deep) / 2;
-  return Math.round(length * width * avgDepth * 7.48); // 7.48 gallons per cubic foot
-}
 
 const chlorineSteps = [0, 1, 2, 3, 5, 7.5, 10];
+const waterColorSteps = ['light green', 'dark green', 'completely black'] as const;
 const chemicalFields = [
   { key: 'chlorine', label: 'Chlorine (Cl)', min: 0, max: 10, step: 1 },
   { key: 'pH', label: 'pH', min: 7.0, max: 8.0, step: 0.2 },
@@ -37,16 +28,6 @@ const defaultCurrent = {
   calcium: 0,
   CYA: 0,
   salt: 0,
-};
-
-const defaultChemicalsUsed = {
-  tabs: 0,
-  algaecide: 0,
-  floc: 0,
-  clarifier: 0,
-  yellowOut: 0,
-  dePowder: 0,
-  phosphateRemover: 0,
 };
 
 const chemicalsUsedFields = [
@@ -77,6 +58,8 @@ export default function HomePage() {
   const [showAddPool, setShowAddPool] = useState(false);
   const [editIdx, setEditIdx] = useState<number | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
+  const [waterColorIdx, setWaterColorIdx] = useState(0);
+  const [waterColorTouched, setWaterColorTouched] = useState(false);
 
   // Fetch pools from cookie
   useEffect(() => {
@@ -97,6 +80,7 @@ export default function HomePage() {
   const selectedGallons = pools[selectedPoolIdx ?? 0]?.gallons;
   // chemCalc(label, current[label as keyof typeof current], ideal[label as keyof typeof ideal])
   const chemCalc = (key: string, label: string, currentLevel: number, idealLevel: number, poolGallons: number, mode: 'text' | 'jsx' = 'jsx') => {
+    const gallons = Number(poolGallons) || 0;
     const diff = idealLevel - currentLevel;
 
     const textOutput = (message: string) => `${label}: ${message}`;
@@ -104,7 +88,34 @@ export default function HomePage() {
     const output = mode === 'text' ? textOutput : jsxOutput;
 
     if (key === 'chlorine') {
-      return output(diff > 0 ? `Add ${((poolGallons*diff/(10000*12.6))) > 1 ? (poolGallons*diff/(10000*12.6)).toFixed(2) : `${(poolGallons*diff/(10000*12.6)*25).toFixed(0)}oz or ${(poolGallons*diff/(10000*12.6)).toFixed(2)}` } scoops of shock, or ${(poolGallons*diff/(11*10000)).toFixed(2)} gallons of bleach` : `Don't add chlorine`);
+      if (!gallons) {
+        return output('Select a pool to calculate chlorine amount');
+      }
+
+      const maintenanceText = diff > 0
+        ? `Normal adjustment: add ${((gallons * diff / (10000 * 12.6))) > 1 ? (gallons * diff / (10000 * 12.6)).toFixed(2) : `${(gallons * diff / (10000 * 12.6) * 25).toFixed(0)}oz or ${(gallons * diff / (10000 * 12.6)).toFixed(2)}`} scoops of shock, or ${(gallons * diff / (11 * 10000)).toFixed(2)} gallons of bleach`
+        : `Normal adjustment: don't add chlorine`;
+
+      if (!waterColorTouched) {
+        return output(maintenanceText);
+      }
+
+      // Shock target follows a CYA-based rule of thumb, then bumps target for darker water.
+      const cyaLevel = current.CYA;
+      const algaeBoost = waterColorIdx === 0 ? 0 : waterColorIdx === 1 ? 2 : 5;
+      const shockTarget = Math.max(10, cyaLevel * 0.4) + algaeBoost;
+      const shockDiff = Math.max(0, shockTarget - currentLevel);
+
+      if (shockDiff === 0) {
+        return output(`Shock level met for ${waterColorSteps[waterColorIdx]} water. Target ${shockTarget.toFixed(1)} ppm at CYA ${cyaLevel}. ${maintenanceText}`);
+      }
+
+      const shockScoops = gallons * shockDiff / (10000 * 12.6);
+      const shockBleachGallons = gallons * shockDiff / (11 * 10000);
+
+      return output(
+        `Shock target for ${waterColorSteps[waterColorIdx]} water: ${shockTarget.toFixed(1)} ppm. Raise chlorine by ${shockDiff.toFixed(1)} ppm: add ${shockScoops.toFixed(2)} scoops of shock, or ${shockBleachGallons.toFixed(2)} gallons of bleach. ${maintenanceText}`
+      );
     }
     if (key === 'pH') {
       return output(
@@ -501,6 +512,7 @@ export default function HomePage() {
                 `Pool gallons: ${pool.gallons}\n` +
                 `Date: ${currentDate}\n` +
                 `Time: ${new Date().toLocaleTimeString()}\n` +
+                `Water color: ${waterColorTouched ? waterColorSteps[waterColorIdx] : 'not set'}\n` +
                 `Current pool chemical levels:\n${chemicalLevels}\n` +
                 `Suggested chemicals to add:\n${suggestedChemicals}\n` +
                 `Chemicals used:\n${chemicalsUsedText}`;
@@ -645,6 +657,28 @@ export default function HomePage() {
               )}
             </div>
           ))}
+
+          <div>
+            <label className="mr-2">Water color: {waterColorTouched ? waterColorSteps[waterColorIdx] : <span className="text-gray-400">--</span>}</label>
+            <input
+              type="range"
+              min={0}
+              max={waterColorSteps.length - 1}
+              step={1}
+              value={waterColorIdx}
+              onChange={e => {
+                setWaterColorIdx(Number(e.target.value));
+                setWaterColorTouched(true);
+              }}
+              style={{ opacity: waterColorTouched ? 1 : 0.5 }}
+              className="w-full h-8 accent-green-600 slider-thumb-lg slider-track-lg"
+            />
+            <div className="flex justify-between text-xs text-gray-500 mt-1">
+              <span>{waterColorSteps[0]}</span>
+              <span>{waterColorSteps[1]}</span>
+              <span>{waterColorSteps[2]}</span>
+            </div>
+          </div>
         </form>
         
   <form className="space-y-4 p-4 border rounded bg-white/80 max-w-md mx-auto">

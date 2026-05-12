@@ -13,12 +13,12 @@ const chemicalFields = [
 ];
 
 const defaultIdeal = {
-  chlorine: 3,
+  chlorine: 7.5,
   pH: 7.4,
   alkalinity: 80,
   calcium: 250,
   CYA: 30,
-  salt: 3500,
+  salt: 3400,
 };
 
 const defaultCurrent = {
